@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import {View, ScrollView, Text, Image, PermissionsAndroid, Platform, TouchableOpacity, Alert} from 'react-native';
-import RNBluetoothClassic, { BluetoothDevice, } from 'react-native-bluetooth-classic';
-import { stylesConexao } from './src/EstilosPaginaConexao.tsx'
-import { stylesConectado } from './src/EstilosPaginaConectado.tsx';
+import { ActivityIndicator, View, ScrollView, Text, Image, PermissionsAndroid, Platform, TouchableOpacity, Alert, Switch } from 'react-native';
+import RNBluetoothClassic, { BluetoothDevice } from 'react-native-bluetooth-classic';
+import { estilosConectado, estilosConexao, estilosMensagens } from './src/Estilos.tsx';
 
 const BluetoothClassicTerminal = () => {
   const [paired, setPaired] = useState<any[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<BluetoothDevice>();
-  const [receivedMessage, setReceivedMessage] = useState("");
+  const [mensagensRecebidas, setMensagensRecebidas] = useState<string[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [intervalId, setIntervalId] = useState<NodeJS.Timer>();
-  const [selectPercentageOption, setselectPercentageOption] = useState<number | null>(null);
-  const [selectTimeOption, setSelectTimeOption] = useState<number | null>(null);
   const [estado, setEstado] = useState(0);
-  const [selectOperationTime, setselectOperationTime] = useState<number | null>(null);
-  const [selectRestanteTime, setselectRestanteTime] = useState<number | null>(null);
-  const [selectOperandoOption, setSelectOperandoOption] = useState<number | null>(null);
-  const [infoCommandSent, setInfoCommandSent] = useState(false);
+  const [selecionarOpcaoPorcentagem, setSelecionarOpcaoPorcentagem] = useState<number | null>(null);
+  const [selecionarOpcaoTempo, setSelecionarOpcaoTempo] = useState<number | null>(null);
+  const [selecionarTempoOperacao, setselecionarTempoOperacao] = useState<number | null>(0);
+  const [selecionarTempoRestante, setselecionarTempoRestante] = useState<number | null>(null);
+  const [selecionarOpcaoOperando, setselecionarOpcaoOperando] = useState<number | null>(null);
+  const [comandoInfoEnviado, setComandoInfoEnviado] = useState(false);
+  const [isSwitchOn, setIsSwitchOn] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   {/* Comandos bluetooth*/ }
 
@@ -31,30 +32,31 @@ const BluetoothClassicTerminal = () => {
     }
   };
 
-  const sendCommandToArduino = async (command: string) => {
+  const enviarComandoParaArduino = async (command: string) => {
     if (selectedDevice && isConnected) {
       try {
         await selectedDevice.write(command); // Envia o comando para o Arduino
       } catch (error) {
-        console.error('Error sending message:', error);
+        console.error('Erro ao enviar mensagem:', error);
       }
     }
   };
 
   const startDeviceDiscovery = async () => {
-    console.log("searching for devices...");
+    console.log("Procurando dispositivos...");
     try {
       const paired = await RNBluetoothClassic.getBondedDevices();
-      console.log("Bonded peripherals: " + paired.length);
+      console.log("Dispostivos pareados: " + paired.length);
       setPaired(paired);
     } catch (error) {
-      console.error('Error bonded devices:', error);
+      console.error('Erro ao procurar dispositivos:', error);
     }
   }
 
   const connectToDevice = async (device: BluetoothDevice) => {
+    setIsConnecting(true);
     try {
-      console.log("Connecting to device");
+      console.log("Conectando ao dispositivo");
       let connection = await device.isConnected();
       if (!connection) {
         await device.connect({
@@ -65,65 +67,98 @@ const BluetoothClassicTerminal = () => {
       }
       setSelectedDevice(device);
       setIsConnected(true);
-      console.log("is connected : ", isConnected);
+      console.log("Conectado : ", isConnected);
     } catch (error) {
       Alert.alert(
         "Erro de Conexão",
         "O dispositivo que você tentou acessar está ocupado ou indisponível, tente novamente",
         [{ text: "OK" }]
       );
+    } finally {
+      setIsConnecting(false);
     }
-  }
+  };
 
   const readData = async () => {
     if (selectedDevice && isConnected) {
       try {
-        let message = await selectedDevice.read();
-        if (message) {
-          message = message.trim();
-          if (message !== "" && message !== " ") {
-            if (receivedMessage.length > 300) {
-              setReceivedMessage("");
+        let mensagem = await selectedDevice.read();
+        if (mensagem) {
+          mensagem = mensagem.trim();
+          if (mensagem !== "" && mensagem !== " ") {
+            if (mensagensRecebidas.length > 300) {
+              setMensagensRecebidas([]);
             }
-            setReceivedMessage(receivedMessage => receivedMessage + message + "\n");
 
-            // Teste para ver se mensagem é do tipo regex
-            const regex = /level:(\d+),tempo:(\d+),estado:(\d+)/;
-            const match = message.match(regex);
+            const timestamp = new Date().toLocaleString('pt-BR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            });
+
+            setMensagensRecebidas(mensagensRecebidas => [...mensagensRecebidas, `${timestamp}: ${mensagem}`]);
+
+            // Teste para ver o tipo de mensagem
+            const regex = /nivel:(\d+),tempo:(\d+),estado:(\d+)/;
+            const match = mensagem.match(regex);
 
             if (match) {
-              const level = parseInt(match[1], 10);
+              const nivel = parseInt(match[1], 10);
               const tempo = parseInt(match[2], 10);
               const estado = parseInt(match[3], 10);
 
               if (estado == 5) {
-                setSelectOperandoOption(1);
+                setselecionarOpcaoOperando(1);
+                setIsSwitchOn(true);
               } else if (estado == 2) {
-                setSelectOperandoOption(0);
+                setselecionarOpcaoOperando(0);
+                setIsSwitchOn(false);
               }
 
-              // Update the states with the parsed values
-              setselectPercentageOption(level);
-              setSelectTimeOption(tempo);
-              setEstado(estado); // Atualiza a variável de estado "estado"
+              setSelecionarOpcaoPorcentagem(nivel);
+              setSelecionarOpcaoTempo(tempo);
+              setEstado(estado);
             }
 
-            // Teste para ver se mensagem é do tipo regex2
-            const regex2 = /operando:(\d+),restante:(\d+)/;
-            const match2 = message.match(regex2);
+            // Teste para ver o tipo de mensagem
+            const regex2 = /operando:(\d+),restante:(\d+),nivel:(\d+),tempo:(\d+),estado:(\d+)/;
+            const match2 = mensagem.match(regex2);
 
             if (match2) {
               const operando = parseInt(match2[1], 10);
               const restante = parseInt(match2[2], 10);
-
+              const nivel = parseInt(match2[3], 10);
+              const tempo = parseInt(match2[4], 10);
+              const estado = parseInt(match2[5], 10);
               // Update the states with the parsed values
-              setselectOperationTime(operando);
-              setselectRestanteTime(restante);
+              setselecionarTempoOperacao(operando);
+              setselecionarTempoRestante(restante);
+              setSelecionarOpcaoPorcentagem(nivel);
+              setSelecionarOpcaoTempo(tempo);
+
+              if (estado == 5) {
+                setselecionarOpcaoOperando(1);
+                setIsSwitchOn(true);
+              } else if (estado == 2) {
+                setselecionarOpcaoOperando(0);
+                setIsSwitchOn(false);
+              }
             }
           }
         }
       } catch (error) {
-        console.error('Error reading message:', error);
+        Alert.alert(
+          "Erro de Conexão",
+          "A conexão com o dispositivo foi perdida, confira se o aparelho está ligado, dentro do raio de operação e tente novamente",
+          [{ text: "OK" }]
+        );
+        setSelectedDevice(undefined);
+        setIsConnected(false);
+        setMensagensRecebidas([]);
+        console.log("Disconnected from device");
       }
     }
   };
@@ -142,34 +177,34 @@ const BluetoothClassicTerminal = () => {
 
           setSelectedDevice(undefined);
           setIsConnected(false);
-          setReceivedMessage("");
-          console.log("Disconnected from device");
+          setMensagensRecebidas([]);
+          console.log("Desconectado do dispositivo");
         });
 
       } catch (error) {
-        console.error('Error disconnecting:', error);
+        console.error('Erro ao desconectar:', error);
       }
     }
   }
 
-  const increaseGeneration = () => {
-    setselectPercentageOption(prevOption => {
-      const newOption = (prevOption === 4 ? 1 : prevOption === 1 ? 2 : prevOption === 2 ? 3 : 4);
-      sendCommandToArduino(`level:${newOption},tempo:${selectTimeOption},estado:${estado}`);
-      return newOption;
+  const aumentarGeracao = () => {
+    setSelecionarOpcaoPorcentagem(prevOption => {
+      const novaOpcao = (prevOption === 4 ? 1 : prevOption === 1 ? 2 : prevOption === 2 ? 3 : 4);
+      enviarComandoParaArduino(`nivel:${novaOpcao},tempo:${selecionarOpcaoTempo},estado:${estado}`);
+      return novaOpcao;
     });
   };
 
-  const increaseTime = () => {
-    setSelectTimeOption(prevOption => {
-      const newOption = (prevOption === 4 ? 1 : prevOption === 1 ? 2 : prevOption === 2 ? 3 : 4);
-      sendCommandToArduino(`level:${selectPercentageOption},tempo:${newOption},estado:${estado}`);
-      return newOption;
+  const aumentarTempo = () => {
+    setSelecionarOpcaoTempo(prevOption => {
+      const novaOpcao = (prevOption === 4 ? 1 : prevOption === 1 ? 2 : prevOption === 2 ? 3 : 4);
+      enviarComandoParaArduino(`nivel:${selecionarOpcaoPorcentagem},tempo:${novaOpcao},estado:${estado}`);
+      return novaOpcao;
     });
   };
 
-  const getImageSource = () => {
-    switch (selectPercentageOption) {
+  const obterImagem = () => {
+    switch (selecionarOpcaoPorcentagem) {
       case 1:
         return require('./assets/images/25.png');
       case 2:
@@ -183,15 +218,14 @@ const BluetoothClassicTerminal = () => {
     }
   };
 
-  const formatTime = (timeInSeconds: number | null) => {
-    if (selectTimeOption == 4) return "--:--"
+  const formatarTempo = (timeInSeconds: number | null) => {
     if (timeInSeconds === null) return "00:00";
     const minutes = Math.floor(timeInSeconds / 60);
     const seconds = timeInSeconds % 60;
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
-  const getInitialTime = (timeOption: number | null) => {
+  const getTempoInicial = (timeOption: number | null) => {
     switch (timeOption) {
       case 3:
         return 10; // 10 seconds
@@ -199,10 +233,13 @@ const BluetoothClassicTerminal = () => {
         return 4; // 4 seconds
       case 1:
         return 2; // 2 seconds
+      case 4:
+        return 0; // Inicializa como 0 para "Direto"
       default:
         return 0;
     }
   };
+
 
   useEffect(() => {
     let intervalId: string | number | NodeJS.Timer | undefined;
@@ -226,8 +263,16 @@ const BluetoothClassicTerminal = () => {
             buttonNegative: 'Cancel',
           }
         );
-
-        if (grantedLocation === PermissionsAndroid.RESULTS.GRANTED) {
+        const grantedScan = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+          {
+            title: 'Bluetooth Scan Permission',
+            message: 'This app needs Bluetooth Scan permission to discover devices.',
+            buttonPositive: 'OK',
+            buttonNegative: 'Cancel',
+          }
+        );
+        if (grantedLocation === PermissionsAndroid.RESULTS.GRANTED && grantedScan === PermissionsAndroid.RESULTS.GRANTED) {
           console.log('Bluetooth permissions granted');
         } else {
           console.log('Bluetooth permissions denied');
@@ -245,73 +290,103 @@ const BluetoothClassicTerminal = () => {
   }, [])
 
   useEffect(() => {
-    if (selectedDevice && isConnected && !infoCommandSent) {
+    if (selectedDevice && isConnected && !comandoInfoEnviado) {
       const timeoutId = setTimeout(() => {
-        sendCommandToArduino('INFO');
-        setInfoCommandSent(true);
+        enviarComandoParaArduino('INFO');
+        setComandoInfoEnviado(true);
       }, 1000);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [selectedDevice, isConnected, infoCommandSent]);
+  }, [selectedDevice, isConnected, comandoInfoEnviado]);
 
   useEffect(() => {
-    if (selectTimeOption !== null) {
-      const initialTime = getInitialTime(selectTimeOption);
-      setselectRestanteTime(initialTime);
+    if (selecionarOpcaoTempo !== null) {
+      const initialTime = getTempoInicial(selecionarOpcaoTempo);
+      if (selecionarOpcaoTempo === 4) {
+        setselecionarTempoOperacao(initialTime);
+      } else {
+        setselecionarTempoRestante(initialTime);
+      }
     }
-  }, [selectTimeOption]);
+  }, [selecionarOpcaoTempo]);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
 
-    if (selectOperandoOption === 1 && selectRestanteTime !== null) {
+    if (selecionarOpcaoOperando === 1) {
       intervalId = setInterval(() => {
-        setselectRestanteTime(prevTime => {
-          if (prevTime !== null && prevTime > 0) {
-            return prevTime - 1;
-          } else {
-            if (intervalId) clearInterval(intervalId);
-            return prevTime;
-          }
-        });
+        if (selecionarOpcaoTempo === 4) {
+          setselecionarTempoOperacao(prevTime => (prevTime !== null ? prevTime + 1 : 1));
+        } else {
+          setselecionarTempoRestante(prevTime => {
+            if (prevTime !== null && prevTime > 0) {
+              return prevTime - 1;
+            } else {
+              if (intervalId) clearInterval(intervalId);
+              return prevTime;
+            }
+          });
+        }
       }, 1000);
     }
 
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [selectOperandoOption, selectRestanteTime]);
+  }, [selecionarOpcaoOperando, selecionarTempoRestante, selecionarOpcaoTempo]);
 
+  const tratarAtualizacaoDeInformacao = () => {
+    enviarComandoParaArduino('INFO');
+  };
+
+  const clearMessages = () => {
+    setMensagensRecebidas([]);
+  };
+
+  const handleSwitchChange = (value: boolean) => {
+    setIsSwitchOn(value);
+    if (value) {
+      enviarComandoParaArduino(`nivel:${selecionarOpcaoPorcentagem},tempo:${selecionarOpcaoTempo},estado:5`);
+    } else {
+      enviarComandoParaArduino(`STOP`);
+    }
+  };
 
   return (
-    <View style={stylesConexao.containerGeral}>
-      <Text style={stylesConexao.tituloAplicativo}>Controlador</Text>
+    <View style={estilosConexao.containerGeral}>
+      <Text style={estilosConexao.tituloAplicativo}>Controlador</Text>
       <ScrollView>
         {/*Tela de conexão*/}
         {!isConnected && (
           <>
-            <View style={stylesConexao.containerTelaConexao}>
+            <View style={estilosConexao.containerTelaConexao}>
               <TouchableOpacity
                 onPress={() => startDeviceDiscovery()}
-                style={[stylesConexao.botaoAtualizaLista]}>
-                <Text style={[stylesConexao.textoBotaoScan,]}>Atualizar lista</Text>
-                <Text style={[stylesConexao.botaoAtualizarLista,]}>↻</Text>
+                style={[estilosConexao.botaoAtualizaLista]}>
+                <Text style={[estilosConexao.textoBotaoScan,]}>Atualizar lista</Text>
+                <Text style={[estilosConexao.botaoAtualizarLista,]}>↻</Text>
               </TouchableOpacity>
-              <Text style={[stylesConexao.tituloListaDispositivos,]}>Dispositivos conectados:</Text>
+              <Text style={[estilosConexao.tituloListaDispositivos,]}>Dispositivos conectados:</Text>
               {paired.map((pair: BluetoothDevice, i) => (
                 <View key={i}
-                  style={[stylesConexao.containerListaDispositivos]}>
+                  style={[estilosConexao.containerListaDispositivos]}>
                   <View>
-                    <Text style={stylesConexao.nomeDispositivoLista}>{pair.name}</Text>
-                    <Text style={stylesConexao.dispositivoId}>{pair.id}</Text>
+                    <Text style={estilosConexao.nomeDispositivoLista}>{pair.name}</Text>
+                    <Text style={estilosConexao.dispositivoId}>{pair.id}</Text>
                   </View>
-                  <TouchableOpacity onPress={() => connectToDevice(pair)} style={[stylesConexao.botaoConectar]}>
-                    <Text style={[stylesConexao.textoBotaoConectar]}>Conectar</Text>
+                  <TouchableOpacity onPress={() => connectToDevice(pair)} style={[estilosConexao.botaoConectar]}>
+                    <Text style={[estilosConexao.textoBotaoConectar]}>Conectar</Text>
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
+            {isConnecting && (
+              <View style={estilosConexao.loadingContainer}>
+                <ActivityIndicator size="large" color="#0000ff" />
+                <Text style={estilosConexao.loadingText}>Conectando...</Text>
+              </View>
+            )}
           </>
         )}
 
@@ -319,148 +394,155 @@ const BluetoothClassicTerminal = () => {
         {selectedDevice && isConnected && (
           <>
             {/*Dispositivo conectado e botão para desconectar*/}
-            <View style={[stylesConectado.containerBotaoDesconectar]}>
+            <View style={[estilosConectado.containerBotaoDesconectar]}>
               <TouchableOpacity
-                onPress={() => disconnect()} style={[stylesConectado.botaoDesconectar]}>
-                <Text style={stylesConectado.textoBotaoDesconectar}>Desconectar</Text>
+                onPress={() => disconnect()} style={[estilosConectado.botaoDesconectar]}>
+                <Text style={estilosConectado.textoBotaoDesconectar}>Desconectar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={tratarAtualizacaoDeInformacao} style={[estilosConectado.botaoAtualizar]}>
+                <Image source={require('./assets/images/atualizar.png')} style={estilosConectado.iconeAtualizar} />
               </TouchableOpacity>
             </View>
 
             {/*Lista de opções de Porcentagem e Tempo*/}
-            <View style={stylesConectado.containerMaquina}>
-              <View style={stylesConectado.blocosLateraisMaquina}>
-                <Text style={stylesConectado.geracaoEtempo}>Geração</Text>
+            <View style={estilosConectado.containerMaquina}>
+              <View style={estilosConectado.blocosLateraisMaquina}>
+                <Text style={estilosConectado.geracaoEtempo}>Geração</Text>
 
                 <TouchableOpacity
-                  style={stylesConectado.cadaOpcaoMaquina}
-                  onPress={() => { setselectPercentageOption(4); sendCommandToArduino(`level:4,tempo:${selectTimeOption},estado:${estado}`); }}>
-                  <View style={[stylesConectado.opcaoEled]}>
-                    <Text style={stylesConectado.textoCadaOpcao}>100%</Text>
-                    <Text style={stylesConectado.botaoBrancoVerde}>{selectPercentageOption === 4 ? '🟢' : '⚪'}</Text>
+                  style={estilosConectado.cadaOpcaoMaquina}
+                  onPress={() => { setSelecionarOpcaoPorcentagem(4); enviarComandoParaArduino(`nivel:4,tempo:${selecionarOpcaoTempo},estado:${estado}`); }}>
+                  <View style={[estilosConectado.opcaoEled]}>
+                    <Text style={estilosConectado.textoCadaOpcao}>100%</Text>
+                    <Text style={estilosConectado.botaoBrancoVerde}>{selecionarOpcaoPorcentagem === 4 ? '🟢' : '⚪'}</Text>
                   </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={stylesConectado.cadaOpcaoMaquina}
-                  onPress={() => { setselectPercentageOption(3); sendCommandToArduino(`level:3,tempo:${selectTimeOption},estado:${estado}`); }}>
-                  <View style={[stylesConectado.opcaoEled]}>
-                    <Text style={stylesConectado.textoCadaOpcao}>75%</Text>
-                    <Text style={stylesConectado.botaoBrancoVerde}>{selectPercentageOption === 3 ? '🟢' : '⚪'}</Text>
+                  style={estilosConectado.cadaOpcaoMaquina}
+                  onPress={() => { setSelecionarOpcaoPorcentagem(3); enviarComandoParaArduino(`nivel:3,tempo:${selecionarOpcaoTempo},estado:${estado}`); }}>
+                  <View style={[estilosConectado.opcaoEled]}>
+                    <Text style={estilosConectado.textoCadaOpcao}>75%</Text>
+                    <Text style={estilosConectado.botaoBrancoVerde}>{selecionarOpcaoPorcentagem === 3 ? '🟢' : '⚪'}</Text>
                   </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={stylesConectado.cadaOpcaoMaquina}
-                  onPress={() => { setselectPercentageOption(2); sendCommandToArduino(`level:2,tempo:${selectTimeOption},estado:${estado}`); }}>
-                  <View style={[stylesConectado.opcaoEled]}>
-                    <Text style={stylesConectado.textoCadaOpcao}>50%</Text>
-                    <Text style={stylesConectado.botaoBrancoVerde}>{selectPercentageOption === 2 ? '🟢' : '⚪'}</Text>
+                  style={estilosConectado.cadaOpcaoMaquina}
+                  onPress={() => { setSelecionarOpcaoPorcentagem(2); enviarComandoParaArduino(`nivel:2,tempo:${selecionarOpcaoTempo},estado:${estado}`); }}>
+                  <View style={[estilosConectado.opcaoEled]}>
+                    <Text style={estilosConectado.textoCadaOpcao}>50%</Text>
+                    <Text style={estilosConectado.botaoBrancoVerde}>{selecionarOpcaoPorcentagem === 2 ? '🟢' : '⚪'}</Text>
                   </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={stylesConectado.cadaOpcaoMaquina}
-                  onPress={() => { setselectPercentageOption(1); sendCommandToArduino(`level:1,tempo:${selectTimeOption},estado:${estado}`); }}>
-                  <View style={[stylesConectado.opcaoEled]}>
-                    <Text style={stylesConectado.textoCadaOpcao}>25%</Text>
-                    <Text style={stylesConectado.botaoBrancoVerde}>{selectPercentageOption === 1 ? '🟢' : '⚪'}</Text>
+                  style={estilosConectado.cadaOpcaoMaquina}
+                  onPress={() => { setSelecionarOpcaoPorcentagem(1); enviarComandoParaArduino(`nivel:1,tempo:${selecionarOpcaoTempo},estado:${estado}`); }}>
+                  <View style={[estilosConectado.opcaoEled]}>
+                    <Text style={estilosConectado.textoCadaOpcao}>25%</Text>
+                    <Text style={estilosConectado.botaoBrancoVerde}>{selecionarOpcaoPorcentagem === 1 ? '🟢' : '⚪'}</Text>
                   </View>
                 </TouchableOpacity>
 
                 {/*Botão +*/}
-                <TouchableOpacity style={stylesConectado.botaoMais} onPress={increaseGeneration}>
-                  <Text style={stylesConectado.textoBotaoMais}>+</Text>
+                <TouchableOpacity style={estilosConectado.botaoMais} onPress={aumentarGeracao}>
+                  <Text style={estilosConectado.textoBotaoMais}>+</Text>
                 </TouchableOpacity>
-
-                {/*Operando*/}
-                <View style={[stylesConectado.cadaOpcaoMaquina]}>
-                  <View style={[stylesConectado.opcaoEled]}>
-                    <Text style={stylesConectado.textoCadaOpcao}>Ligado</Text>
-                    <Text style={stylesConectado.botaoBrancoVerde}>{selectOperandoOption === 1 ? '🟢' : '⚪'}</Text>
-                  </View>
-                </View>
-
               </View>
 
-              <View style={stylesConectado.blocosLateraisMaquina}>
-                <Text style={stylesConectado.geracaoEtempo}>Tempo</Text>
+              <View style={estilosConectado.blocosLateraisMaquina}>
+                <Text style={estilosConectado.geracaoEtempo}>Tempo</Text>
 
                 <TouchableOpacity
-                  style={stylesConectado.cadaOpcaoMaquina}
-                  onPress={() => { setSelectTimeOption(4); sendCommandToArduino(`level:${selectPercentageOption},tempo:4,estado:${estado}`); }}>
-                  <View style={[stylesConectado.opcaoEled]}>
-                    <Text style={stylesConectado.botaoBrancoVerde}>{selectTimeOption === 4 ? '🟢' : '⚪'}</Text>
-                    <Text style={stylesConectado.textoCadaOpcao}>Direto</Text>
+                  style={estilosConectado.cadaOpcaoMaquina}
+                  onPress={() => { setSelecionarOpcaoTempo(4); enviarComandoParaArduino(`nivel:${selecionarOpcaoPorcentagem},tempo:4,estado:${estado}`); }}>
+                  <View style={[estilosConectado.opcaoEled]}>
+                    <Text style={estilosConectado.botaoBrancoVerde}>{selecionarOpcaoTempo === 4 ? '🟢' : '⚪'}</Text>
+                    <Text style={estilosConectado.textoCadaOpcao}>Direto</Text>
                   </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={stylesConectado.cadaOpcaoMaquina}
-                  onPress={() => { setSelectTimeOption(3); sendCommandToArduino(`level:${selectPercentageOption},tempo:3,estado:${estado}`); }}>
-                  <View style={[stylesConectado.opcaoEled]}>
-                    <Text style={stylesConectado.botaoBrancoVerde}>{selectTimeOption === 3 ? '🟢' : '⚪'}</Text>
-                    <Text style={stylesConectado.textoCadaOpcao}>10h</Text>
+                  style={estilosConectado.cadaOpcaoMaquina}
+                  onPress={() => { setSelecionarOpcaoTempo(3); enviarComandoParaArduino(`nivel:${selecionarOpcaoPorcentagem},tempo:3,estado:${estado}`); }}>
+                  <View style={[estilosConectado.opcaoEled]}>
+                    <Text style={estilosConectado.botaoBrancoVerde}>{selecionarOpcaoTempo === 3 ? '🟢' : '⚪'}</Text>
+                    <Text style={estilosConectado.textoCadaOpcao}>10h</Text>
                   </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={stylesConectado.cadaOpcaoMaquina}
-                  onPress={() => { setSelectTimeOption(2); sendCommandToArduino(`level:${selectPercentageOption},tempo:2,estado:${estado}`); }}>
-                  <View style={[stylesConectado.opcaoEled]}>
-                    <Text style={stylesConectado.botaoBrancoVerde}>{selectTimeOption === 2 ? '🟢' : '⚪'}</Text>
-                    <Text style={stylesConectado.textoCadaOpcao}>4h</Text>
+                  style={estilosConectado.cadaOpcaoMaquina}
+                  onPress={() => { setSelecionarOpcaoTempo(2); enviarComandoParaArduino(`nivel:${selecionarOpcaoPorcentagem},tempo:2,estado:${estado}`); }}>
+                  <View style={[estilosConectado.opcaoEled]}>
+                    <Text style={estilosConectado.botaoBrancoVerde}>{selecionarOpcaoTempo === 2 ? '🟢' : '⚪'}</Text>
+                    <Text style={estilosConectado.textoCadaOpcao}>4h</Text>
                   </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={stylesConectado.cadaOpcaoMaquina}
-                  onPress={() => { setSelectTimeOption(1); sendCommandToArduino(`level:${selectPercentageOption},tempo:1,estado:${estado}`); }}>
-                  <View style={[stylesConectado.opcaoEled]}>
-                    <Text style={stylesConectado.botaoBrancoVerde}>{selectTimeOption === 1 ? '🟢' : '⚪'}</Text>
-                    <Text style={stylesConectado.textoCadaOpcao}>2h</Text>
+                  style={estilosConectado.cadaOpcaoMaquina}
+                  onPress={() => { setSelecionarOpcaoTempo(1); enviarComandoParaArduino(`nivel:${selecionarOpcaoPorcentagem},tempo:1,estado:${estado}`); }}>
+                  <View style={[estilosConectado.opcaoEled]}>
+                    <Text style={estilosConectado.botaoBrancoVerde}>{selecionarOpcaoTempo === 1 ? '🟢' : '⚪'}</Text>
+                    <Text style={estilosConectado.textoCadaOpcao}>2h</Text>
                   </View>
                 </TouchableOpacity>
 
                 {/*Botão +*/}
-                <TouchableOpacity style={stylesConectado.botaoMais} onPress={increaseTime}>
-                  <Text style={stylesConectado.textoBotaoMais}>+</Text>
-                </TouchableOpacity>
-
-                {/*Botão de ligar*/}
-                <TouchableOpacity
-                  onPress={() => selectOperandoOption === 0 ? sendCommandToArduino(`level:${selectPercentageOption},tempo:${selectTimeOption},estado:5`) : sendCommandToArduino(`STOP`)}
-                  style={stylesConectado.botaoLigar}>
-                  <Text style={stylesConectado.textoBotaoLigar}>{selectOperandoOption === 0 ? 'Ligar' : 'Desligar'}</Text>
+                <TouchableOpacity style={estilosConectado.botaoMais} onPress={aumentarTempo}>
+                  <Text style={estilosConectado.textoBotaoMais}>+</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
-            <View style={stylesConectado.informacoesSelecionadas}>
-              {selectTimeOption && (
-                <Image source={getImageSource()} style={stylesConectado.imagens} 
+            <View style={estilosConectado.informacoesSelecionadas}>
+              {selecionarOpcaoTempo && (
+                <Image source={obterImagem()} style={estilosConectado.imagens}
                 />
               )}
-              {selectTimeOption && (
-                <View style={stylesConectado.containerContador}>
-                  <Text style={stylesConectado.textoContador}>
-                    {formatTime(selectRestanteTime)}
+              {selecionarOpcaoTempo && (
+                <View style={estilosConectado.containerContador}>
+                  <Text style={estilosConectado.textoContador}>
+                    {selecionarOpcaoTempo === 4
+                      ? formatarTempo(selecionarTempoOperacao)
+                      : formatarTempo(selecionarTempoRestante)}
                   </Text>
                 </View>
               )}
             </View>
 
-            {/* 
-            <View style={styles.messageContainer}>
-              <ScrollView>
-                <Text>{receivedMessage}</Text>
+            <View style={estilosConectado.switchContainer}>
+              <Text style={estilosConectado.textoSwitch}>{isSwitchOn ? 'Desligar' : 'Ligar'}</Text>
+              <Switch
+                value={isSwitchOn}
+                onValueChange={handleSwitchChange}
+                trackColor={{ false: "#FF6B6B", true: "#4CAF50" }}
+                thumbColor="#FFFFFF"
+                style={{ transform: [{ scaleX: 1.5 }, { scaleY: 1.5 }] }} // Aumenta o tamanho do Switch
+              />
+            </View>
+
+            <View style={estilosMensagens.messageContainer}>
+              <View style={estilosMensagens.header}>
+                <TouchableOpacity onPress={clearMessages} style={estilosMensagens.botaoLimpar}>
+                  <Text style={estilosMensagens.textoBotaoLimpar}>Limpar</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={estilosMensagens.scrollView}>
+                {mensagensRecebidas.map((msg, index) => (
+                  <Text key={index} style={estilosMensagens.textoMensagens}>{msg}</Text>
+                ))}
               </ScrollView>
             </View>
-            */}
           </>
         )}
       </ScrollView>
     </View>
   );
+
 };
 
 export default BluetoothClassicTerminal;

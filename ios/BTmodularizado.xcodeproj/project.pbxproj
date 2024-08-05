@@ -32,6 +32,15 @@
 		F4C161E47998426B937AF106 /* Montserrat-SemiBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DB950D1F501B47B3A2612D4B /* Montserrat-SemiBoldItalic.ttf */; };
 		82561245E0DA4A5D9FC411C4 /* Montserrat-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 415D9E9B454C4514A3FA509B /* Montserrat-Thin.ttf */; };
 		B6B84975CA664082B11939C6 /* Montserrat-ThinItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 483C973C952F4C81BA0704CB /* Montserrat-ThinItalic.ttf */; };
+		59A738B11C6F4A869715BEB5 /* Orbitron-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D493A78E7120416FBD1B7FDE /* Orbitron-VariableFont_wght.ttf */; };
+		F08C00C0D7BA4F518058A734 /* Orbitron-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DAED555E41C14F04A1339804 /* Orbitron-Black.ttf */; };
+		069B9C78BEE4426187BF4826 /* Orbitron-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 28C1A738EEF14354A72D4850 /* Orbitron-Bold.ttf */; };
+		71EE6327EB504B5394607262 /* Orbitron-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BAFC0EC2CFFA40169FCB539C /* Orbitron-ExtraBold.ttf */; };
+		E04BEF298C934C7180425AC4 /* Orbitron-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E02DC4F300114B0BBDC0AA17 /* Orbitron-Medium.ttf */; };
+		2ACF3A3E86C448768BF81F9C /* Orbitron-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 433BBE87A52B4A12B2CAFEA6 /* Orbitron-Regular.ttf */; };
+		61C4B26EDD6A4692842800A5 /* Orbitron-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = ADC902383B07424B85810E1C /* Orbitron-SemiBold.ttf */; };
+		14397A49E61D4031A2F0DE58 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = FAC7F70F46CE43599FF7AEC2 /* OFL.txt */; };
+		D46B359448D34803B7A9B254 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = 280E22DCE696403BA346A917 /* README.txt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -81,6 +90,15 @@
 		DB950D1F501B47B3A2612D4B /* Montserrat-SemiBoldItalic.ttf */ = {isa = PBXFileReference; name = "Montserrat-SemiBoldItalic.ttf"; path = "../assets/fonts/Montserrat-SemiBoldItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		415D9E9B454C4514A3FA509B /* Montserrat-Thin.ttf */ = {isa = PBXFileReference; name = "Montserrat-Thin.ttf"; path = "../assets/fonts/Montserrat-Thin.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		483C973C952F4C81BA0704CB /* Montserrat-ThinItalic.ttf */ = {isa = PBXFileReference; name = "Montserrat-ThinItalic.ttf"; path = "../assets/fonts/Montserrat-ThinItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D493A78E7120416FBD1B7FDE /* Orbitron-VariableFont_wght.ttf */ = {isa = PBXFileReference; name = "Orbitron-VariableFont_wght.ttf"; path = "../assets/fonts/Orbitron/Orbitron-VariableFont_wght.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		DAED555E41C14F04A1339804 /* Orbitron-Black.ttf */ = {isa = PBXFileReference; name = "Orbitron-Black.ttf"; path = "../assets/fonts/Orbitron/static/Orbitron-Black.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		28C1A738EEF14354A72D4850 /* Orbitron-Bold.ttf */ = {isa = PBXFileReference; name = "Orbitron-Bold.ttf"; path = "../assets/fonts/Orbitron/static/Orbitron-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		BAFC0EC2CFFA40169FCB539C /* Orbitron-ExtraBold.ttf */ = {isa = PBXFileReference; name = "Orbitron-ExtraBold.ttf"; path = "../assets/fonts/Orbitron/static/Orbitron-ExtraBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		E02DC4F300114B0BBDC0AA17 /* Orbitron-Medium.ttf */ = {isa = PBXFileReference; name = "Orbitron-Medium.ttf"; path = "../assets/fonts/Orbitron/static/Orbitron-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		433BBE87A52B4A12B2CAFEA6 /* Orbitron-Regular.ttf */ = {isa = PBXFileReference; name = "Orbitron-Regular.ttf"; path = "../assets/fonts/Orbitron/static/Orbitron-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		ADC902383B07424B85810E1C /* Orbitron-SemiBold.ttf */ = {isa = PBXFileReference; name = "Orbitron-SemiBold.ttf"; path = "../assets/fonts/Orbitron/static/Orbitron-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		FAC7F70F46CE43599FF7AEC2 /* OFL.txt */ = {isa = PBXFileReference; name = "OFL.txt"; path = "../assets/fonts/Orbitron/OFL.txt"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		280E22DCE696403BA346A917 /* README.txt */ = {isa = PBXFileReference; name = "README.txt"; path = "../assets/fonts/Orbitron/README.txt"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -208,6 +226,15 @@
 				DB950D1F501B47B3A2612D4B /* Montserrat-SemiBoldItalic.ttf */,
 				415D9E9B454C4514A3FA509B /* Montserrat-Thin.ttf */,
 				483C973C952F4C81BA0704CB /* Montserrat-ThinItalic.ttf */,
+				D493A78E7120416FBD1B7FDE /* Orbitron-VariableFont_wght.ttf */,
+				DAED555E41C14F04A1339804 /* Orbitron-Black.ttf */,
+				28C1A738EEF14354A72D4850 /* Orbitron-Bold.ttf */,
+				BAFC0EC2CFFA40169FCB539C /* Orbitron-ExtraBold.ttf */,
+				E02DC4F300114B0BBDC0AA17 /* Orbitron-Medium.ttf */,
+				433BBE87A52B4A12B2CAFEA6 /* Orbitron-Regular.ttf */,
+				ADC902383B07424B85810E1C /* Orbitron-SemiBold.ttf */,
+				FAC7F70F46CE43599FF7AEC2 /* OFL.txt */,
+				280E22DCE696403BA346A917 /* README.txt */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -326,6 +353,15 @@
 				F4C161E47998426B937AF106 /* Montserrat-SemiBoldItalic.ttf in Resources */,
 				82561245E0DA4A5D9FC411C4 /* Montserrat-Thin.ttf in Resources */,
 				B6B84975CA664082B11939C6 /* Montserrat-ThinItalic.ttf in Resources */,
+				59A738B11C6F4A869715BEB5 /* Orbitron-VariableFont_wght.ttf in Resources */,
+				F08C00C0D7BA4F518058A734 /* Orbitron-Black.ttf in Resources */,
+				069B9C78BEE4426187BF4826 /* Orbitron-Bold.ttf in Resources */,
+				71EE6327EB504B5394607262 /* Orbitron-ExtraBold.ttf in Resources */,
+				E04BEF298C934C7180425AC4 /* Orbitron-Medium.ttf in Resources */,
+				2ACF3A3E86C448768BF81F9C /* Orbitron-Regular.ttf in Resources */,
+				61C4B26EDD6A4692842800A5 /* Orbitron-SemiBold.ttf in Resources */,
+				14397A49E61D4031A2F0DE58 /* OFL.txt in Resources */,
+				D46B359448D34803B7A9B254 /* README.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
